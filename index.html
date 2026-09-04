@@ -337,12 +337,23 @@
         <div class="flash"></div>
         <div class="scribble" id="welcomeText">Welcome!</div>
       </div>
-      <p class="caption">pin the noughts and crosses on tania's forehead</p>
+      <p class="caption">a very serious game awaits</p>
+      <div class="music-card menu-music" aria-label="Menu music">
+        <button class="music-toggle" id="menuMusicToggle" aria-label="Play menu song" title="Play / pause">
+          <svg id="menuPlayIcon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          <svg id="menuPauseIcon" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+        </button>
+        <div class="music-meta">
+          <span class="music-title">Menu Song 🤍</span>
+          <span class="music-artist">Click X</span>
+        </div>
+        <div class="eq" id="menuEq" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+      </div>
       <button class="x-btn" id="closeWelcome" aria-label="Close and start game">✕</button>
     </div>
   </div>
 
-  <div id="ytHolder"><div id="ytPlayer"></div></div>
+  <div id="ytHolder"><div id="menuPlayer"></div><div id="ytPlayer"></div></div>
 
   <main class="game" id="game" aria-hidden="true">
     <div class="board-stage">
@@ -435,11 +446,18 @@
      gesture; the first tap on this card or the X button
      is used to unlock playback when necessary.
   ====================================================== */
+  var menuPlayer = null;
   var ytPlayer = null;
+  var menuReady = false;
   var ytReady = false;
-  var isMuted = false;
+  var menuPlaying = false;
+  var isMuted = true;
   var currentVideoId = 'Ktc9Oh9TXdE';
+  var menuVideoId = 'K4tBHGyZuME';
 
+  var menuEqEl = document.getElementById('menuEq');
+  var menuPlayIcon = document.getElementById('menuPlayIcon');
+  var menuPauseIcon = document.getElementById('menuPauseIcon');
   var eqEl = document.getElementById('eq');
   var playIcon = document.getElementById('playIcon');
   var pauseIcon = document.getElementById('pauseIcon');
@@ -448,6 +466,16 @@
   var muteToggleEl = document.getElementById('muteToggle');
   var volumeIcon = document.getElementById('volumeIcon');
   var mutedIcon = document.getElementById('mutedIcon');
+
+  function setMenuPlayingUI(isPlaying){
+    menuPlaying = !!isPlaying;
+    menuEqEl.classList.toggle('playing', menuPlaying);
+    menuPlayIcon.style.display = menuPlaying ? 'none' : '';
+    menuPauseIcon.style.display = menuPlaying ? '' : 'none';
+    document.getElementById('menuMusicToggle').setAttribute(
+      'aria-label', menuPlaying ? 'Pause menu song' : 'Play menu song'
+    );
+  }
 
   function setPlayingUI(isPlaying){
     eqEl.classList.toggle('playing', isPlaying);
@@ -502,45 +530,38 @@
   }
 
   window.onYouTubeIframeAPIReady = function(){
+    menuPlayer = new YT.Player('menuPlayer', {
+      videoId: menuVideoId,
+      playerVars: { autoplay: 1, playsinline: 1, rel: 0, controls: 0, modestbranding: 1 },
+      events: {
+        onReady: function(e){
+          menuReady = true;
+          try{ e.target.mute(); e.target.playVideo(); }catch(err){}
+        },
+        onStateChange: function(e){
+          if (e.data === YT.PlayerState.PLAYING) setMenuPlayingUI(true);
+          else if (e.data === YT.PlayerState.PAUSED || e.data === YT.PlayerState.ENDED || e.data === YT.PlayerState.CUED) setMenuPlayingUI(false);
+        }
+      }
+    });
+
     ytPlayer = new YT.Player('ytPlayer', {
       videoId: currentVideoId,
-      playerVars: {
-        autoplay: 1,
-        playsinline: 1,
-        rel: 0,
-        controls: 0,
-        modestbranding: 1
-      },
+      playerVars: { autoplay: 0, playsinline: 1, rel: 0, controls: 0, modestbranding: 1 },
       events: {
         onReady: function(e){
           ytReady = true;
-
-          // Start muted first so browsers that allow muted autoplay
-          // can begin immediately. If the site is already permitted
-          // to autoplay with sound, restore the selected volume.
-          try{
-            e.target.mute();
-            e.target.playVideo();
-            musicStateEl.textContent = 'Playing — muted for autoplay';
-          }catch(err){
-            musicStateEl.textContent = 'Tap play to start';
-          }
+          try{ e.target.mute(); }catch(err){}
+          setMuteUI(true);
         },
         onStateChange: function(e){
           var state = e.data;
-
           if (state === YT.PlayerState.PLAYING){
             setPlayingUI(true);
             musicStateEl.textContent = isMuted ? 'Playing — muted' : 'Playing';
-          } else if (
-            state === YT.PlayerState.PAUSED ||
-            state === YT.PlayerState.ENDED ||
-            state === YT.PlayerState.CUED
-          ){
+          } else if (state === YT.PlayerState.PAUSED || state === YT.PlayerState.ENDED || state === YT.PlayerState.CUED){
             setPlayingUI(false);
-            if (state === YT.PlayerState.ENDED){
-              musicStateEl.textContent = 'Song ended';
-            }
+            if (state === YT.PlayerState.ENDED) musicStateEl.textContent = 'Song ended';
           }
         }
       }
@@ -550,6 +571,18 @@
   var ytTag = document.createElement('script');
   ytTag.src = 'https://www.youtube.com/iframe_api';
   document.head.appendChild(ytTag);
+
+  document.getElementById('menuMusicToggle').addEventListener('click', function(){
+    if (!menuReady || !menuPlayer) return;
+    try{
+      if (menuPlayer.getPlayerState() === YT.PlayerState.PLAYING){
+        menuPlayer.pauseVideo();
+      }else{
+        menuPlayer.unMute();
+        menuPlayer.playVideo();
+      }
+    }catch(e){}
+  });
 
   document.getElementById('musicToggle').addEventListener('click', function(){
     if (!ytReady || !ytPlayer) {
@@ -603,6 +636,13 @@
     }
   }, {passive:true});
 
+  function stopMenuMusic(){
+    try{
+      if (menuReady && menuPlayer && menuPlayer.stopVideo) menuPlayer.stopVideo();
+    }catch(e){}
+    setMenuPlayingUI(false);
+  }
+
   function stopMusic(){
     try{
       if (ytReady && ytPlayer && ytPlayer.stopVideo) {
@@ -618,6 +658,7 @@
   var gameEl = document.getElementById('game');
 
   document.getElementById('closeWelcome').addEventListener('click', function(){
+    stopMenuMusic();
     welcomeEl.classList.add('closing');
     setTimeout(function(){
       welcomeEl.style.display = 'none';
