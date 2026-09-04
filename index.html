@@ -468,13 +468,28 @@
   var mutedIcon = document.getElementById('mutedIcon');
 
   function setMenuPlayingUI(isPlaying){
-    menuPlaying = !!isPlaying;
+    // Only show the pause icon when YouTube has CONFIRMED that the
+    // menu song is actually playing. A play request by itself is not
+    // enough because Safari/iOS can reject or delay playback.
+    menuPlaying = isPlaying === true;
     menuEqEl.classList.toggle('playing', menuPlaying);
     menuPlayIcon.style.display = menuPlaying ? 'none' : '';
     menuPauseIcon.style.display = menuPlaying ? '' : 'none';
     document.getElementById('menuMusicToggle').setAttribute(
       'aria-label', menuPlaying ? 'Pause menu song' : 'Play menu song'
     );
+  }
+
+  function syncMenuPlayingUI(){
+    if (!menuReady || !menuPlayer || !window.YT || !YT.PlayerState){
+      setMenuPlayingUI(false);
+      return;
+    }
+    try{
+      setMenuPlayingUI(menuPlayer.getPlayerState() === YT.PlayerState.PLAYING);
+    }catch(e){
+      setMenuPlayingUI(false);
+    }
   }
 
   function setPlayingUI(isPlaying){
@@ -536,11 +551,21 @@
       events: {
         onReady: function(e){
           menuReady = true;
-          try{ e.target.mute(); e.target.playVideo(); }catch(err){}
+          // Start muted for autoplay compatibility, but do NOT mark the
+          // button as playing until YouTube sends a PLAYING state.
+          setMenuPlayingUI(false);
+          try{
+            e.target.mute();
+            e.target.playVideo();
+          }catch(err){}
+          setTimeout(syncMenuPlayingUI, 150);
+          setTimeout(syncMenuPlayingUI, 800);
         },
         onStateChange: function(e){
-          if (e.data === YT.PlayerState.PLAYING) setMenuPlayingUI(true);
-          else if (e.data === YT.PlayerState.PAUSED || e.data === YT.PlayerState.ENDED || e.data === YT.PlayerState.CUED) setMenuPlayingUI(false);
+          // BUFFERING / UNSTARTED are deliberately treated as not playing.
+          // This prevents the pause icon from getting stuck when autoplay
+          // is blocked or the video is still loading.
+          setMenuPlayingUI(e.data === YT.PlayerState.PLAYING);
         }
       }
     });
@@ -575,13 +600,26 @@
   document.getElementById('menuMusicToggle').addEventListener('click', function(){
     if (!menuReady || !menuPlayer) return;
     try{
-      if (menuPlayer.getPlayerState() === YT.PlayerState.PLAYING){
+      var state = menuPlayer.getPlayerState();
+
+      if (state === YT.PlayerState.PLAYING){
         menuPlayer.pauseVideo();
+        // Do not rely on the click to decide the final state.
+        // Wait for YouTube's actual state event and verify shortly after.
+        setMenuPlayingUI(false);
+        setTimeout(syncMenuPlayingUI, 100);
       }else{
+        // A user click is a valid gesture for Safari/iPhone.
         menuPlayer.unMute();
         menuPlayer.playVideo();
+        // Keep the play icon visible until PLAYING is confirmed.
+        setMenuPlayingUI(false);
+        setTimeout(syncMenuPlayingUI, 100);
+        setTimeout(syncMenuPlayingUI, 500);
       }
-    }catch(e){}
+    }catch(e){
+      setMenuPlayingUI(false);
+    }
   });
 
   document.getElementById('musicToggle').addEventListener('click', function(){
