@@ -337,7 +337,7 @@
         <div class="flash"></div>
         <div class="scribble" id="welcomeText">Welcome!</div>
       </div>
-      <p class="caption">a very serious game awaits</p>
+      <p class="caption">pin the noughts and crosses on tania's forehead (click x)</p>
       <div class="music-card menu-music" aria-label="Menu music">
         <button class="music-toggle" id="menuMusicToggle" aria-label="Play menu song" title="Play / pause">
           <svg id="menuPlayIcon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
@@ -382,7 +382,7 @@
             <select class="song-select" id="songSelect" aria-label="Choose a song">
               <option value="Ktc9Oh9TXdE">Yuno Miles — Martin Luther King</option>
               <option value="oNb8087hocY">Sezen Aksu — Kusura Bakma</option>
-              <option value="jpUsQlnbJSc">Song 3 — YouTube</option>
+              <option value="jpUsQlnbJSc">Lana Del Ray</option>
             </select>
             <span class="music-state" id="musicState">Music controls</span>
           </div>
@@ -870,7 +870,7 @@
     if (result.line) drawWinLine(result.line);
     if (result.winner === HUMAN){ scores.you++; setStatus('you win!'); }
     else if (result.winner === AI){ scores.ai++; setStatus('ai wins — rematch?'); }
-    else { scores.draw++; setStatus("draw — no one's forehead is safe"); }
+    else { scores.draw++; setStatus("draw — tania's forehead is too big"); }
     scoreYouEl.textContent = scores.you;
     scoreAIEl.textContent = scores.ai;
     scoreDrawEl.textContent = scores.draw;
