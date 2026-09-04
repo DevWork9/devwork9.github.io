@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -113,13 +113,14 @@
 
   .music-card{
     margin-top:12px;
-    display:flex; align-items:center; gap:10px;
+    display:flex; align-items:center; gap:9px;
     background:var(--ink);
     color:var(--paper);
     border-radius:10px;
     padding:10px 12px;
   }
-  .music-toggle{
+  .music-toggle,
+  .mute-toggle{
     flex:none;
     width:34px; height:34px;
     border-radius:50%;
@@ -131,10 +132,43 @@
     cursor:pointer;
     touch-action:manipulation;
   }
-  .music-toggle svg{ width:14px; height:14px; }
-  .music-meta{ flex:1; min-width:0; line-height:1.25; }
-  .music-title{ display:block; font-weight:700; font-size:13.5px; }
-  .music-artist{ display:block; font-size:11.5px; opacity:.65; }
+  .music-toggle svg,
+  .mute-toggle svg{ width:14px; height:14px; }
+  .music-controls{
+    flex:1;
+    min-width:0;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .song-select{
+    width:100%;
+    min-width:0;
+    border:1px solid rgba(255,248,239,.18);
+    border-radius:8px;
+    padding:8px 30px 8px 9px;
+    background:rgba(255,248,239,.08);
+    color:var(--paper);
+    font:600 12px/1.2 'Quicksand',system-ui,sans-serif;
+    appearance:auto;
+    -webkit-appearance:auto;
+    cursor:pointer;
+    touch-action:manipulation;
+  }
+  .song-select:focus-visible{
+    outline:2px solid var(--gold);
+    outline-offset:2px;
+  }
+  .song-select option{
+    background:var(--ink);
+    color:var(--paper);
+  }
+  .music-state{
+    display:block;
+    margin-top:4px;
+    font-size:10.5px;
+    opacity:.58;
+  }
   .eq{ display:flex; align-items:flex-end; gap:2px; height:16px; flex:none; }
   .eq span{
     width:3px; background:var(--gold); border-radius:2px;
@@ -146,6 +180,7 @@
   .eq span:nth-child(2){ animation-delay:.15s; }
   .eq span:nth-child(3){ animation-delay:.3s; }
   .eq span:nth-child(4){ animation-delay:.45s; }
+
   @keyframes eqBounce{
     0%,100%{ height:4px; }
     50%{ height:15px; }
@@ -222,6 +257,17 @@
     width:min(92vw,440px);
     display:flex; flex-direction:column; align-items:center; gap:12px;
   }
+  .game-music{
+    width:100%;
+    box-sizing:border-box;
+    margin-top:2px;
+  }
+  .game-actions{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+  }
   .status{
     font-family:'Permanent Marker',cursive;
     font-size:clamp(18px,5vw,22px);
@@ -261,6 +307,19 @@
   }
   .restart:active{ transform:rotate(-1deg) scale(.96); }
   .restart.pulse{ animation:pulse 1.4s ease-in-out infinite; }
+  .reset{
+    margin-top:2px;
+    background:transparent;
+    color:var(--paper);
+    border:1px solid rgba(255,248,239,.25);
+    border-radius:10px;
+    padding:10px 18px;
+    font-weight:700;
+    font-size:13px;
+    cursor:pointer;
+    touch-action:manipulation;
+  }
+  .reset:active{ transform:scale(.96); }
   @keyframes pulse{ 0%,100%{ box-shadow:0 8px 18px rgba(0,0,0,.35);} 50%{ box-shadow:0 8px 26px rgba(255,206,84,.55);} }
 
   @media (prefers-reduced-motion: reduce){
@@ -278,18 +337,7 @@
         <div class="flash"></div>
         <div class="scribble" id="welcomeText">Welcome!</div>
       </div>
-      <p class="caption">a very serious game awaits</p>
-      <div class="music-card">
-        <button class="music-toggle" id="musicToggle" aria-label="Play song">
-          <svg id="playIcon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-          <svg id="pauseIcon" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
-        </button>
-        <div class="music-meta">
-          <span class="music-title">Menu Song 🤍</span>
-          <span class="music-artist">Click X</span>
-        </div>
-        <div class="eq" id="eq"><span></span><span></span><span></span><span></span></div>
-      </div>
+      <p class="caption">pin the noughts and crosses on tania's forehead</p>
       <button class="x-btn" id="closeWelcome" aria-label="Close and start game">✕</button>
     </div>
   </div>
@@ -311,7 +359,40 @@
         <div class="chip ai">ai&nbsp;<b id="scoreAI">0</b></div>
         <div class="chip draw">draw&nbsp;<b id="scoreDraw">0</b></div>
       </div>
-      <button class="restart" id="restart">restart</button>
+
+      <div class="music-card game-music" aria-label="Music controls">
+        <button class="music-toggle" id="musicToggle" aria-label="Play song" title="Play / pause">
+          <svg id="playIcon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          <svg id="pauseIcon" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+        </button>
+
+        <div class="music-controls">
+          <div style="flex:1;min-width:0;">
+            <select class="song-select" id="songSelect" aria-label="Choose a song">
+              <option value="Ktc9Oh9TXdE">Yuno Miles — Martin Luther King</option>
+              <option value="oNb8087hocY">Sezen Aksu — Kusura Bakma</option>
+              <option value="jpUsQlnbJSc">Song 3 — YouTube</option>
+            </select>
+            <span class="music-state" id="musicState">Music controls</span>
+          </div>
+        </div>
+
+        <button class="mute-toggle" id="muteToggle" aria-label="Mute song" title="Mute / unmute">
+          <svg id="volumeIcon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M3 9v6h4l5 4V5L7 9H3zm13.5 3a4.5 4.5 0 0 0-2.1-3.8v7.6a4.5 4.5 0 0 0 2.1-3.8zm0-8.5v2.1A9 9 0 0 1 20 12a9 9 0 0 1-3.5 7.4v2.1A11 11 0 0 0 22 12 11 11 0 0 0 16.5 3.5z"/>
+          </svg>
+          <svg id="mutedIcon" viewBox="0 0 24 24" fill="currentColor" style="display:none">
+            <path d="M3 9v6h4l5 4V5L7 9H3zm13.6 1.6 2.1-2.1 1.3 1.3-2.1 2.1 2.1 2.1-1.3 1.3-2.1-2.1-2.1 2.1-1.3-1.3 2.1-2.1-2.1-2.1 1.3-1.3 2.1 2.1z"/>
+          </svg>
+        </button>
+
+        <div class="eq" id="eq" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+      </div>
+
+      <div class="game-actions">
+        <button class="restart" id="restart">restart</button>
+        <button class="reset" id="reset">reset</button>
+      </div>
     </div>
   </main>
 
@@ -349,47 +430,185 @@
 
   /* ======================================================
      2. music card, backed by the YouTube IFrame API
+     Three selectable YouTube tracks + mute/unmute.
+     Safari/iOS may block audible autoplay until a user
+     gesture; the first tap on this card or the X button
+     is used to unlock playback when necessary.
   ====================================================== */
   var ytPlayer = null;
   var ytReady = false;
+  var isMuted = false;
+  var currentVideoId = 'Ktc9Oh9TXdE';
+
   var eqEl = document.getElementById('eq');
   var playIcon = document.getElementById('playIcon');
   var pauseIcon = document.getElementById('pauseIcon');
+  var musicStateEl = document.getElementById('musicState');
+  var songSelectEl = document.getElementById('songSelect');
+  var muteToggleEl = document.getElementById('muteToggle');
+  var volumeIcon = document.getElementById('volumeIcon');
+  var mutedIcon = document.getElementById('mutedIcon');
 
   function setPlayingUI(isPlaying){
     eqEl.classList.toggle('playing', isPlaying);
     playIcon.style.display = isPlaying ? 'none' : '';
     pauseIcon.style.display = isPlaying ? '' : 'none';
+    document.getElementById('musicToggle').setAttribute(
+      'aria-label', isPlaying ? 'Pause song' : 'Play song'
+    );
+  }
+
+  function setMuteUI(muted){
+    isMuted = !!muted;
+    volumeIcon.style.display = isMuted ? 'none' : '';
+    mutedIcon.style.display = isMuted ? '' : 'none';
+    muteToggleEl.setAttribute('aria-label', isMuted ? 'Unmute song' : 'Mute song');
+    muteToggleEl.title = isMuted ? 'Unmute' : 'Mute';
+    musicStateEl.textContent = isMuted ? 'Muted' : 'Audio enabled';
+  }
+
+  function requestPlay(){
+    if (!ytReady || !ytPlayer) return;
+    try{
+      if (isMuted) ytPlayer.mute();
+      else ytPlayer.unMute();
+      ytPlayer.playVideo();
+    }catch(e){}
+  }
+
+  function loadSong(videoId, autoplay){
+    if (!videoId) return;
+    currentVideoId = videoId;
+    if (!ytReady || !ytPlayer) {
+      musicStateEl.textContent = 'Loading song…';
+      return;
+    }
+
+    try{
+      if (isMuted) ytPlayer.mute();
+      else ytPlayer.unMute();
+
+      if (autoplay) {
+        ytPlayer.loadVideoById(videoId);
+        musicStateEl.textContent = isMuted ? 'Playing — muted' : 'Playing';
+      } else {
+        ytPlayer.cueVideoById(videoId);
+        setPlayingUI(false);
+        musicStateEl.textContent = 'Ready';
+      }
+    }catch(e){
+      musicStateEl.textContent = 'Tap play to start';
+    }
   }
 
   window.onYouTubeIframeAPIReady = function(){
     ytPlayer = new YT.Player('ytPlayer', {
-      videoId: 'K4tBHGyZuME',
-      playerVars: { autoplay: 1, playsinline: 1, rel: 0, controls: 0, list: 'RDK4tBHGyZuME' },
+      videoId: currentVideoId,
+      playerVars: {
+        autoplay: 1,
+        playsinline: 1,
+        rel: 0,
+        controls: 0,
+        modestbranding: 1
+      },
       events: {
         onReady: function(e){
           ytReady = true;
-          e.target.playVideo();
+
+          // Start muted first so browsers that allow muted autoplay
+          // can begin immediately. If the site is already permitted
+          // to autoplay with sound, restore the selected volume.
+          try{
+            e.target.mute();
+            e.target.playVideo();
+            musicStateEl.textContent = 'Playing — muted for autoplay';
+          }catch(err){
+            musicStateEl.textContent = 'Tap play to start';
+          }
         },
         onStateChange: function(e){
-          setPlayingUI(e.data === YT.PlayerState.PLAYING);
+          var state = e.data;
+
+          if (state === YT.PlayerState.PLAYING){
+            setPlayingUI(true);
+            musicStateEl.textContent = isMuted ? 'Playing — muted' : 'Playing';
+          } else if (
+            state === YT.PlayerState.PAUSED ||
+            state === YT.PlayerState.ENDED ||
+            state === YT.PlayerState.CUED
+          ){
+            setPlayingUI(false);
+            if (state === YT.PlayerState.ENDED){
+              musicStateEl.textContent = 'Song ended';
+            }
+          }
         }
       }
     });
   };
+
   var ytTag = document.createElement('script');
   ytTag.src = 'https://www.youtube.com/iframe_api';
   document.head.appendChild(ytTag);
 
   document.getElementById('musicToggle').addEventListener('click', function(){
-    if (!ytReady || !ytPlayer) return;
-    var state = ytPlayer.getPlayerState();
-    if (state === YT.PlayerState.PLAYING){ ytPlayer.pauseVideo(); }
-    else { ytPlayer.playVideo(); }
+    if (!ytReady || !ytPlayer) {
+      musicStateEl.textContent = 'Loading song…';
+      return;
+    }
+
+    try{
+      var state = ytPlayer.getPlayerState();
+
+      if (state === YT.PlayerState.PLAYING){
+        ytPlayer.pauseVideo();
+      } else {
+        // A click is a user gesture, so this is the key Safari/iPhone
+        // path for unlocking audible playback if autoplay was blocked.
+        if (isMuted) ytPlayer.unMute();
+        ytPlayer.playVideo();
+        musicStateEl.textContent = isMuted ? 'Playing — muted' : 'Playing';
+      }
+    }catch(e){}
   });
 
+  muteToggleEl.addEventListener('click', function(){
+    if (!ytReady || !ytPlayer) return;
+
+    try{
+      if (isMuted){
+        ytPlayer.unMute();
+        isMuted = false;
+        musicStateEl.textContent = 'Audio enabled';
+      } else {
+        ytPlayer.mute();
+        isMuted = true;
+        musicStateEl.textContent = 'Muted';
+      }
+      setMuteUI(isMuted);
+    }catch(e){}
+  });
+
+  songSelectEl.addEventListener('change', function(){
+    loadSong(this.value, true);
+  });
+
+  // First direct interaction with the music card can unlock sound on Safari.
+  songSelectEl.addEventListener('pointerdown', function(){
+    if (ytReady && ytPlayer && isMuted){
+      try{
+        ytPlayer.unMute();
+        setMuteUI(false);
+      }catch(e){}
+    }
+  }, {passive:true});
+
   function stopMusic(){
-    try{ if (ytReady && ytPlayer && ytPlayer.stopVideo) ytPlayer.stopVideo(); }catch(e){}
+    try{
+      if (ytReady && ytPlayer && ytPlayer.stopVideo) {
+        ytPlayer.stopVideo();
+      }
+    }catch(e){}
   }
 
   /* ======================================================
@@ -399,12 +618,21 @@
   var gameEl = document.getElementById('game');
 
   document.getElementById('closeWelcome').addEventListener('click', function(){
-    stopMusic();
     welcomeEl.classList.add('closing');
     setTimeout(function(){
       welcomeEl.style.display = 'none';
       gameEl.classList.add('visible');
       gameEl.removeAttribute('aria-hidden');
+
+      // Keep the selected song playing as the game opens. If the
+      // browser blocked autoplay, the in-game play button remains
+      // available and the tap is treated as the user gesture.
+      if (ytReady && ytPlayer){
+        try{
+          if (isMuted) ytPlayer.mute();
+          ytPlayer.playVideo();
+        }catch(e){}
+      }
     }, 550);
   });
 
@@ -430,6 +658,7 @@
   var scoreYouEl = document.getElementById('scoreYou');
   var scoreAIEl = document.getElementById('scoreAI');
   var scoreDrawEl = document.getElementById('scoreDraw');
+  var resetBtn = document.getElementById('reset');
 
   var scores = { you:0, ai:0, draw:0 };
   var board, gameOver, humansTurn, cellEls;
@@ -605,6 +834,22 @@
   }
 
   restartBtn.addEventListener('click', startGame);
+  resetBtn.addEventListener('click', function(){
+    scores = { you:0, ai:0, draw:0 };
+    scoreYouEl.textContent = '0';
+    scoreAIEl.textContent = '0';
+    scoreDrawEl.textContent = '0';
+    startGame();
+    if (ytReady && ytPlayer){
+      try{
+        ytPlayer.stopVideo();
+        ytPlayer.mute();
+        isMuted = true;
+        setMuteUI(true);
+        ytPlayer.playVideo();
+      }catch(e){}
+    }
+  });
   startGame();
 
 })();
